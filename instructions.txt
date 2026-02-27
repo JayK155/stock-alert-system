@@ -1,0 +1,7 @@
+📁 stock-alert-system/          ← Create this folder on your Desktop
+    ├── app.py                   ← Your main application (copy the code from earlier)
+    ├── requirements.txt         ← List of ingredients your app needs
+    ├── .env                     ← Your secret API key (don't share this!)
+    ├── .gitignore               ← Tells Git what NOT to upload
+    └── 📁 templates/             ← Folder for your webpage
+        └── index.html           ← Your HTML file
