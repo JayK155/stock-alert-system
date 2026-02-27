@@ -5,3 +5,5 @@ python-dotenv==1.0.0
 requests==2.31.0
 pytz==2023.3
 gunicorn==21.2.0
+pandas==2.0.3
+schedule==1.2.0
