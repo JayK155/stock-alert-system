@@ -1,0 +1,649 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Stock Alert System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-yellow: #f59e0b;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--accent-blue) !important;
+        }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+        }
+        
+        .stat-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: transform 0.3s ease;
+            border-left: 4px solid var(--accent-blue);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+        }
+        
+        .alert-card {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid var(--accent-green);
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .alert-card.new {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(16, 185, 129, 0.1) 100%);
+            animation: highlight 2s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes highlight {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        
+        .symbol {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--accent-blue);
+        }
+        
+        .price {
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+        
+        .positive {
+            color: var(--accent-green);
+        }
+        
+        .negative {
+            color: var(--accent-red);
+        }
+        
+        .volume-badge {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent-blue);
+        }
+        
+        .float-badge {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-yellow);
+        }
+        
+        .market-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        
+        .market-open {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+        }
+        
+        .market-closed {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+        }
+        
+        .criteria-badge {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: var(--accent-blue);
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--accent-blue);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .search-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--bg-card);
+            border-radius: 8px;
+            color: var(--text-primary);
+        }
+        
+        .search-box:focus {
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+            border-color: var(--accent-blue);
+        }
+        
+        .last-scan {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--bg-secondary);">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-chart-line me-2"></i>StockAlert Pro
+            </a>
+            
+            <div class="d-flex align-items-center">
+                <span class="market-status me-3" id="marketStatus">Loading...</span>
+                <span class="status-badge bg-success" id="connectionStatus">Connecting...</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid py-4">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2 class="mb-3">Real-time Stock Alerts</h2>
+                <p class="text-muted">Live scanning for stocks breaking previous day high with volume surge</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="last-scan">
+                    <i class="fas fa-sync-alt me-1"></i>
+                    <span id="lastScan">Last scan: --:--:-- ET</span>
+                </div>
+                <div class="last-scan">
+                    <i class="fas fa-clock me-1"></i>
+                    <span id="nextScan">Next scan: --:-- ET</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-green);">
+                        <i class="fas fa-bell fa-lg"></i>
+                    </div>
+                    <div class="stat-value" id="todayAlerts">0</div>
+                    <div class="text-muted">Today's Alerts</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(59, 130, 246, 0.2); color: var(--accent-blue);">
+                        <i class="fas fa-database fa-lg"></i>
+                    </div>
+                    <div class="stat-value" id="totalAlerts">0</div>
+                    <div class="text-muted">Total Alerts</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-yellow);">
+                        <i class="fas fa-chart-bar fa-lg"></i>
+                    </div>
+                    <div class="stat-value" id="activeSymbols">0</div>
+                    <div class="text-muted">Stocks Monitored</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(168, 85, 247, 0.2); color: #a855f7;">
+                        <i class="fas fa-rocket fa-lg"></i>
+                    </div>
+                    <div class="stat-value" id="scanSpeed">1m</div>
+                    <div class="text-muted">Scan Interval</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Criteria Badges -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="p-3 rounded" style="background: var(--bg-secondary);">
+                    <h5 class="mb-3"><i class="fas fa-filter me-2"></i>Alert Criteria</h5>
+                    <div class="d-flex flex-wrap">
+                        <span class="badge criteria-badge py-2 px-3">
+                            <i class="fas fa-dollar-sign me-1"></i>Price: $1 - $25
+                        </span>
+                        <span class="badge criteria-badge py-2 px-3">
+                            <i class="fas fa-weight-hanging me-1"></i>Float < 25M
+                        </span>
+                        <span class="badge criteria-badge py-2 px-3">
+                            <i class="fas fa-chart-bar me-1"></i>Volume > 15K (1min)
+                        </span>
+                        <span class="badge criteria-badge py-2 px-3">
+                            <i class="fas fa-arrow-up me-1"></i>Breaks Previous Day High
+                        </span>
+                        <span class="badge criteria-badge py-2 px-3">
+                            <i class="fas fa-clock me-1"></i>6:00 AM - 7:00 PM ET
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-dark text-muted">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" id="searchAlerts" class="form-control search-box" placeholder="Search alerts by symbol or name...">
+                    <button class="btn btn-primary" id="manualScan">
+                        <i class="fas fa-sync-alt me-1"></i>Scan Now
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="btn-group" role="group">
+                    <button class="btn btn-outline-secondary" id="clearAlerts">
+                        <i class="fas fa-trash me-1"></i>Clear Old
+                    </button>
+                    <button class="btn btn-outline-secondary" id="toggleSound">
+                        <i class="fas fa-volume-up me-1"></i>Sound On
+                    </button>
+                    <button class="btn btn-outline-secondary" id="exportAlerts">
+                        <i class="fas fa-download me-1"></i>Export
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0" style="background: var(--bg-secondary);">
+                    <div class="card-header border-0 bg-transparent">
+                        <h5 class="mb-0">
+                            <i class="fas fa-bell me-2"></i>Live Alerts
+                            <span class="badge bg-primary ms-2" id="liveAlertsCount">0</span>
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="alertsContainer">
+                            <!-- Alerts will be loaded here -->
+                            <div class="text-center py-5">
+                                <div class="loading-spinner mx-auto mb-3"></div>
+                                <p class="text-muted">Waiting for alerts...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio for alerts -->
+    <audio id="alertSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.wav" type="audio/wav">
+    </audio>
+
+    <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let alerts = [];
+        let soundEnabled = true;
+        let socket;
+        let marketStatus = 'unknown';
+
+        // Initialize WebSocket connection
+        function initWebSocket() {
+            socket = io();
+            
+            socket.on('connect', function() {
+                console.log('Connected to server');
+                updateConnectionStatus('connected');
+                
+                // Request initial data
+                fetchAlerts();
+                fetchMarketStatus();
+            });
+            
+            socket.on('new_alert', function(alert) {
+                console.log('New alert received:', alert);
+                addAlert(alert, true);
+                updateStats();
+            });
+            
+            socket.on('connected', function(data) {
+                console.log('Server connected:', data);
+            });
+            
+            socket.on('disconnect', function() {
+                updateConnectionStatus('disconnected');
+            });
+        }
+
+        // Update connection status display
+        function updateConnectionStatus(status) {
+            const badge = document.getElementById('connectionStatus');
+            if (status === 'connected') {
+                badge.className = 'status-badge bg-success';
+                badge.textContent = 'Connected';
+            } else {
+                badge.className = 'status-badge bg-danger';
+                badge.textContent = 'Disconnected';
+            }
+        }
+
+        // Add alert to display
+        function addAlert(alert, isNew = false) {
+            // Add to beginning of array
+            alerts.unshift(alert);
+            
+            // Keep only last 200 alerts in memory
+            if (alerts.length > 200) {
+                alerts = alerts.slice(0, 200);
+            }
+            
+            // Update display
+            renderAlerts();
+            
+            // Play sound for new alerts
+            if (isNew && soundEnabled) {
+                document.getElementById('alertSound').play();
+            }
+            
+            // Update last scan time
+            document.getElementById('lastScan').textContent = 
+                `Last scan: ${alert.timestamp} ET`;
+        }
+
+        // Render all alerts
+        function renderAlerts() {
+            const container = document.getElementById('alertsContainer');
+            const searchTerm = document.getElementById('searchAlerts').value.toLowerCase();
+            
+            // Filter alerts based on search
+            let filteredAlerts = alerts;
+            if (searchTerm) {
+                filteredAlerts = alerts.filter(alert => 
+                    alert.symbol.toLowerCase().includes(searchTerm) ||
+                    (alert.name && alert.name.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            if (filteredAlerts.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-bell-slash fa-3x mb-3" style="color: var(--text-secondary);"></i>
+                        <p class="text-muted">No alerts found</p>
+                        ${searchTerm ? '<p class="text-muted small">Try a different search term</p>' : ''}
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            filteredAlerts.forEach((alert, index) => {
+                const isRecent = index === 0 && !searchTerm;
+                const changePercent = alert.change_pct ? alert.change_pct.toFixed(2) : '0.00';
+                const changeClass = changePercent >= 0 ? 'positive' : 'negative';
+                
+                html += `
+                    <div class="alert-card ${isRecent ? 'new' : ''}">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <div class="symbol">${alert.symbol}</div>
+                                <div class="small text-muted">${alert.name || 'N/A'}</div>
+                                <div class="small">${alert.date} ${alert.timestamp} ET</div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="price">$${alert.price.toFixed(2)}</div>
+                                <div class="small text-muted">Prev High: $${alert.prev_high.toFixed(2)}</div>
+                                <div class="small ${changeClass}">
+                                    <i class="fas fa-arrow-${changePercent >= 0 ? 'up' : 'down'} me-1"></i>
+                                    ${changePercent}%
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="badge volume-badge py-2 px-3">
+                                    <i class="fas fa-chart-bar me-1"></i>
+                                    ${alert.volume.toLocaleString()}
+                                </span>
+                                <div class="small text-muted mt-1">1-min Volume</div>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="badge float-badge py-2 px-3">
+                                    <i class="fas fa-weight-hanging me-1"></i>
+                                    ${alert.float_millions.toFixed(2)}M
+                                </span>
+                                <div class="small text-muted mt-1">Float</div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="small text-muted">Sector</div>
+                                <div>${alert.sector || 'N/A'}</div>
+                            </div>
+                            <div class="col-md-2 text-end">
+                                <a href="https://finance.yahoo.com/quote/${alert.symbol}" 
+                                   target="_blank" 
+                                   class="btn btn-sm btn-outline-primary me-1"
+                                   title="View Chart">
+                                    <i class="fas fa-chart-line"></i>
+                                </a>
+                                <a href="https://polygon.io/quote/${alert.symbol}" 
+                                   target="_blank" 
+                                   class="btn btn-sm btn-outline-secondary"
+                                   title="Polygon Details">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            document.getElementById('liveAlertsCount').textContent = filteredAlerts.length;
+        }
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('totalAlerts').textContent = alerts.length;
+            
+            const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+            const todayCount = alerts.filter(a => a.date === today).length;
+            document.getElementById('todayAlerts').textContent = todayCount;
+            
+            document.getElementById('liveAlertsCount').textContent = alerts.length;
+        }
+
+        // Fetch alerts from API
+        async function fetchAlerts() {
+            try {
+                const response = await fetch('/api/alerts');
+                const data = await response.json();
+                alerts = data.alerts || [];
+                renderAlerts();
+                updateStats();
+            } catch (error) {
+                console.error('Error fetching alerts:', error);
+            }
+        }
+
+        // Fetch market status
+        async function fetchMarketStatus() {
+            try {
+                const response = await fetch('/api/market-status');
+                const data = await response.json();
+                
+                marketStatus = data.is_market_open ? 'open' : 'closed';
+                const statusElement = document.getElementById('marketStatus');
+                
+                if (marketStatus === 'open') {
+                    statusElement.className = 'market-status market-open';
+                    statusElement.innerHTML = '<i class="fas fa-unlock me-1"></i> Market Open';
+                } else {
+                    statusElement.className = 'market-status market-closed';
+                    statusElement.innerHTML = '<i class="fas fa-lock me-1"></i> Market Closed';
+                }
+                
+                document.getElementById('activeSymbols').textContent = data.symbols_count || '0';
+                document.getElementById('nextScan').textContent = `Next scan: ${data.next_scan} ET`;
+                
+            } catch (error) {
+                console.error('Error fetching market status:', error);
+            }
+        }
+
+        // Trigger manual scan
+        async function triggerManualScan() {
+            const button = document.getElementById('manualScan');
+            const originalText = button.innerHTML;
+            
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Scanning...';
+            
+            try {
+                const response = await fetch('/api/scan-now', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    alert(`Scan complete! Found ${data.alerts_found} new alerts.`);
+                }
+            } catch (error) {
+                console.error('Error triggering scan:', error);
+                alert('Error triggering scan. Please try again.');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        }
+
+        // Export alerts to CSV
+        function exportAlerts() {
+            if (alerts.length === 0) {
+                alert('No alerts to export.');
+                return;
+            }
+            
+            // Convert alerts to CSV
+            const headers = ['Symbol', 'Name', 'Price', 'Prev High', 'Volume', 'Float (M)', 'Sector', 'Time', 'Date'];
+            const csvRows = [
+                headers.join(','),
+                ...alerts.map(alert => [
+                    `"${alert.symbol}"`,
+                    `"${alert.name || ''}"`,
+                    alert.price,
+                    alert.prev_high,
+                    alert.volume,
+                    alert.float_millions,
+                    `"${alert.sector || ''}"`,
+                    `"${alert.timestamp}"`,
+                    `"${alert.date}"`
+                ].join(','))
+            ];
+            
+            const csv = csvRows.join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            a.href = url;
+            a.download = `stock-alerts-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Event Listeners
+        document.getElementById('searchAlerts').addEventListener('input', renderAlerts);
+        document.getElementById('manualScan').addEventListener('click', triggerManualScan);
+        document.getElementById('clearAlerts').addEventListener('click', () => {
+            if (confirm('Clear all alerts? This cannot be undone.')) {
+                alerts = [];
+                renderAlerts();
+                updateStats();
+            }
+        });
+        document.getElementById('toggleSound').addEventListener('click', function() {
+            soundEnabled = !soundEnabled;
+            const icon = soundEnabled ? 'volume-up' : 'volume-mute';
+            const text = soundEnabled ? 'Sound On' : 'Sound Off';
+            this.innerHTML = `<i class="fas fa-${icon} me-1"></i>${text}`;
+        });
+        document.getElementById('exportAlerts').addEventListener('click', exportAlerts);
+
+        // Initialize
+        initWebSocket();
+        
+        // Update market status every minute
+        setInterval(fetchMarketStatus, 60000);
+        
+        // Update next scan time every second
+        setInterval(() => {
+            const now = new Date();
+            const seconds = 60 - now.getSeconds();
+            const nextScanElement = document.getElementById('nextScan');
+            const currentText = nextScanElement.textContent;
+            
+            // Only update if we're showing a time-based message
+            if (currentText.includes('in')) {
+                nextScanElement.textContent = `Next scan in ${seconds}s`;
+            }
+        }, 1000);
+        
+        // Auto-refresh alerts every 30 seconds
+        setInterval(fetchAlerts, 30000);
+    </script>
+</body>
+</html>
